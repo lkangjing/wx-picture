@@ -13,6 +13,8 @@ export default {
     methods: {
         handleClick(){
             //1.将数据缓存下来
+            console.log('打印list:',this.list);
+            console.log('打印index:',this.index);
             getApp().globalData.imgList = this.list
             getApp().globalData.imgIndex = this.index
             //2.再实现跳转页面

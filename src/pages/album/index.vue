@@ -28,7 +28,7 @@
         <view class="album_list">
             <view class="album_item" v-for="(item,index) in wallpaper" :key="item.id">
                 <go-detail :list="wallpaper" :index="index">
-                    <image mode="widthFix" :src="item.thumb + item.rule.replace('$<Height>',360)"></image>
+                    <image mode="aspectFill" :src="item.thumb + item.rule.replace('$<Height>',360)"></image>
                 </go-detail>
             </view>
         </view>
@@ -61,8 +61,8 @@ export default {
     },
     onLoad(options){
         // console.log(options);
-        // this.id = options.id
-        this.id ="5d5f8e45e7bce75ae7fb8278"
+        this.id = options.id
+        // this.id ="5d5f8e45e7bce75ae7fb8278"
         this.getList()
     },
     //页面触底  上拉加载下一页 事件
@@ -165,7 +165,7 @@ export default {
       width: 33.33%;
       border: 3rpx solid #fff;
     image {
-
+        height: 180rpx;
     }
   }
 }

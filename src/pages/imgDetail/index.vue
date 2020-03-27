@@ -14,7 +14,9 @@
 
        <!-- 高清大图 开始 -->
        <view class="high_img">
-           <image mode="widthFix" :src="imgDetail.thumb"></image>
+           <swiper-action @swiperAction="handleSwiperAction">
+               <image mode="widthFix" :src="imgDetail.thumb"></image>
+           </swiper-action>
        </view>
        <!-- 高清大图 结束 -->
 
@@ -116,14 +118,24 @@
            </view>
        </view>
        <!-- 最新评论 结束 -->
+
+       <!-- 下载  开始 -->
+       <view class="download">
+           <view class="download_btn" @click="handleDownload">下载图片</view>
+       </view>
+       <!-- 下载  结束 -->
    </view>
 </template>
 
 <script>
 import moment from 'moment'
+import swiperAction from '@/components/swiperAction'
 //设置语言为中文
 moment.locale("zh-cn")
 export default {
+    components:{
+        swiperAction
+    },
     data() {
         return {
             //图片信息对象 包含用户头像...
@@ -133,23 +145,29 @@ export default {
             //最热评论
             hot:[],
             //最新评论
-            comment:[]
+            comment:[],
+            //图片索引
+            imgIndex:0
         }
     },
     onLoad(){
         // console.log(getApp().globalData);
-        const {imgList,imgIndex} = getApp().globalData
-        this.imgDetail = imgList[imgIndex]
-        // this.imgDetail.newThumb = this.imgDetail.thumb+this.imgDetail.rule.replace('$<Height>',360)
-
-        //xxx年前的数据
-        this.imgDetail.cnTime = moment(this.imgDetail.atime*1000).fromNow()
-
-        //获取图片详情的id
-        // this.imgDetail.id 
-        this.getComments(this.imgDetail.id )
+        const {imgIndex} = getApp().globalData
+        this.imgIndex = imgIndex
+        this.getData()
     },
     methods: {
+        //给当前页面赋值
+        getData(){
+            const {imgList} = getApp().globalData
+            this.imgDetail = imgList[this.imgIndex]
+            //xxx年前的数据
+            this.imgDetail.cnTime = moment(this.imgDetail.atime*1000).fromNow()
+
+            //获取图片详情的id
+            // this.imgDetail.id 
+            this.getComments(this.imgDetail.id )
+        },
         getComments(id){
             this.request({
                 url:`http://157.122.54.189:9088/image/v2/wallpaper/wallpaper/${id}/comment`
@@ -164,6 +182,56 @@ export default {
 
                 this.hot = result.res.hot
                 this.comment = result.res.comment
+            })
+        },
+        //滑动事件
+        handleSwiperAction(e){
+            // 1.用户左滑 imgIndex++  右滑--
+            //2.判断数组是否越界
+            //3.左滑 e.direction === "left"&&this.imgIndex<imgList.length-1
+            //4.右滑 e.direction === "right"&&this.imgIndex>0
+            const {imgList} = getApp().globalData
+            if (e.direction === "left"&&this.imgIndex<imgList.length-1) {
+                //可以进行  左滑 加载下一页
+                this.imgIndex++
+                this.getData()
+            }else if(e.direction === "right"&&this.imgIndex>0){
+                //右滑 加载上一页
+                this.imgIndex--
+                this.getData()
+            }else{
+                uni.showToast({
+                    title:'没有数据了',
+                    icon:'none'
+                })
+            }
+        },
+        //点击下载图片
+        async handleDownload(){
+            // uni.downloadFile
+            // uni.saveImageToPhotosAlbum
+
+            await uni.showLoading({
+                title:'下载中'
+            })
+
+            // 1.将远程文件下载到小程序的内存中 tempFilePath
+            const result1 = await uni.downloadFile({
+                url:this.imgDetail.img,
+            })
+            const {tempFilePath} = result1[1]
+
+            //2.将小程序内存中的临时文件下载到本地
+            const result2 = await uni.saveImageToPhotosAlbum({
+                filePath:tempFilePath
+            })
+
+            //3.提示用户下载成功
+            // console.log('下载成功',result2);
+            uni.hideLoading()
+            await uni.showToast({
+                title:'下载成功'
+                // icon:"success"
             })
         }
     },
@@ -330,6 +398,7 @@ export default {
         image {
             width: 40rpx;
             height: 40rpx;
+            display: inline-block;
         }
       }
     }
@@ -358,6 +427,25 @@ export default {
 .new{
     .icon-liuyan{
         color: aqua!important;
+    }
+}
+
+//下载
+.download{
+    height: 120rpx;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    .download_btn{
+        width: 90%;
+        height: 80%;
+        background-color: $color;
+        color: #fff;
+        font-size: 50rpx;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 }
 </style>
